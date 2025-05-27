@@ -1,36 +1,35 @@
 <?php
-require_once "../config/database.php";
-require_once "../model/ProductManagement.php";
+require_once '../config/database.php';
+require_once '../model/ProductManagement.php';
 
-$db = new Database();
-$conn = $db->getConnection();
-$productModel = new ProductManagement($conn);
+class ProductController {
+    public function index() {
+        $products = Product::getAll();
+        include '../view/products/index.php';
+    }
 
-$action = $_GET['action'] ?? '';
+    public function create() {
+        include '../view/products/create.php';
+    }
 
-switch ($action) {
-    case 'add':
-        // Example: expects POST data
-        $name = $_POST['name'] ?? '';
-        $price = $_POST['price'] ?? 0;
-        $quantity = $_POST['quantity'] ?? 0;
-        $productModel->addProduct($name, $price, $quantity);
-        break;
-    case 'update':
-        $id = $_POST['id'] ?? 0;
-        $name = $_POST['name'] ?? '';
-        $price = $_POST['price'] ?? 0;
-        $quantity = $_POST['quantity'] ?? 0;
-        $productModel->updateProduct($id, $name, $price, $quantity);
-        break;
-    case 'delete':
-        $id = $_POST['id'] ?? 0;
-        $productModel->deleteProduct($id);
-        break;
-    case 'list':
-    default:
-        $products = $productModel->getProducts();
-        // You can include a view here to display $products
-        break;
+    public function store() {
+        Product::add($_POST['name'], $_POST['price'], $_POST['stock']);
+        header('Location: ../index.php?controller=product&action=index');
+    }
+
+    public function edit() {
+        $product = Product::getById($_GET['id']);
+        include '../view/products/edit.php';
+    }
+
+    public function update() {
+        Product::update($_POST['id'], $_POST['name'], $_POST['price'], $_POST['stock']);
+        header('Location: ../index.php?controller=product&action=index');
+    }
+
+    public function delete() {
+        Product::delete($_GET['id']);
+        header('Location: ../index.php?controller=product&action=index');
+    }
 }
 ?>
