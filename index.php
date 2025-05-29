@@ -1,3 +1,1 @@
-<?php
-header('Location: views/products/Products.php');
-?>
+<?php      header("Location: views/products/Maindashboard.php") ?>
