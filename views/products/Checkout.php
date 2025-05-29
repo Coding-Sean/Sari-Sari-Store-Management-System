@@ -243,6 +243,7 @@ require_once __DIR__ . '/../../config/database.php';
                             </div>
                         </div>`;
 
+                    // Update order items and totals
                     $('#orderItems').html(html);
                     $('#subtotal').text(`₱${total.toFixed(2)}`);
                     $('#total').text(`₱${total.toFixed(2)}`);
