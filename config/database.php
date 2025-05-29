@@ -1,7 +1,7 @@
 <?php
 class Database {
     private $host = "localhost";
-    private $database = "sari_sari_store";
+    private $database = "sari_sari_storeV1";
     private $username = "root";
     private $password = "";
     private $conn;
