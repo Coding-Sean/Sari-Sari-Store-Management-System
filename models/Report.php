@@ -237,5 +237,28 @@ class Report {
             return false;
         }
     }
+    public function getTopSellingProducts($startDate = null, $endDate = null, $limit = 50) {
+    try {
+        error_log("[Report Model] Getting top selling products");
+        
+        $database = new Database();
+        $products = $database->callProcedure('get_top_selling_products', [
+            $startDate, 
+            $endDate, 
+            $limit
+        ], true);
+        
+        if (!$products) {
+            $products = [];
+        }
+        
+        error_log("[Report Model] Found " . count($products) . " product records");
+        return $products;
+        
+    } catch (Exception $e) {
+        error_log("[Report Model] Error in getTopSellingProducts: " . $e->getMessage());
+        return false;
+        }
+    }
 }
 ?>
