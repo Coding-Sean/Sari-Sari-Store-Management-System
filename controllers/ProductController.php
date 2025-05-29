@@ -2,91 +2,121 @@ ProductController.php
 <?php
 session_start();
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/Product.php';
 
-class ProductController {
-    private $db;
-    private $conn;
+$db = new Database();
+$conn = $db->getConnection();
+$product = new Product($conn);
 
-    public function __construct() {
-        $this->db = new Database();
-        $this->conn = $this->db->getConnection();
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+try {
+    if (!$conn) {
+        throw new Exception("Database connection failed");
     }
 
-    public function handleRequest() {
-        $action = $_POST['action'] ?? $_GET['action'] ?? '';
-        
-        switch ($action) {
-            case 'get_categories':
-                $this->getCategories();
-                break;
-            case 'get_products_by_category':
-                $this->getProductsByCategory();
-                break;
-            case 'get_all_products':
-                $this->getAllProducts();
-                break;
-            default:
-                echo json_encode(['success' => false, 'message' => 'Invalid action']);
-        }
-    }
-
-    private function getCategories() {
-        try {
-            $categories = $this->db->callProcedure('get_all_categories', [], true);
-            echo json_encode(['success' => true, 'categories' => $categories]);
-        } catch (Exception $e) {
-            error_log("Error getting categories: " . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
-
-    private function getProductsByCategory() {
-        try {
-            $products = $this->db->callProcedure('get_products_by_category', [], true);
-            
-            // Group products by category
-            $groupedProducts = [];
-            foreach ($products as $product) {
-                $categoryId = $product['category_id'];
-                if (!isset($groupedProducts[$categoryId])) {
-                    $groupedProducts[$categoryId] = [
-                        'category_id' => $product['category_id'],
-                        'category_name' => $product['category_name'],
-                        'category_description' => $product['category_description'],
-                        'products' => []
-                    ];
-                }
-                
-                if ($product['product_id']) { // Only add if product exists
-                    $groupedProducts[$categoryId]['products'][] = [
-                        'product_id' => $product['product_id'],
-                        'name' => $product['product_name'],
-                        'description' => $product['product_description'],
-                        'price' => $product['price'],
-                        'quantity' => $product['quantity'],
-                        'stock_status' => $product['stock_status']
-                    ];
-                }
+    switch ($action) {
+        case 'get_categories':
+            error_log("[ProductController] Getting categories");
+            $categories = $product->getCategories();
+            if ($categories === false) {
+                error_log("[ProductController] Failed to get categories");
+                throw new Exception("Failed to get categories");
             }
-            
-            echo json_encode(['success' => true, 'categories' => array_values($groupedProducts)]);
-        } catch (Exception $e) {
-            error_log("Error getting products by category: " . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
+            error_log("[ProductController] Successfully retrieved " . count($categories) . " categories");
+            echo json_encode(['success' => true, 'categories' => $categories]);
+            break;
 
-    private function getAllProducts() {
-        try {
-            $products = $this->db->callProcedure('get_all_products', [], true);
+        case 'get_products_by_category':
+            error_log("[ProductController] Getting products by category");
+            $products = $product->getProductsByCategory();
+            if ($products === false) {
+                error_log("[ProductController] Failed to get products by category");
+                throw new Exception("Failed to get products by category");
+            }
+            error_log("[ProductController] Successfully retrieved products by category");
+            echo json_encode(['success' => true, 'categories' => $products]);
+            break;
+
+        case 'get_all_products':
+            error_log("[ProductController] Getting all products");
+            $products = $product->getAllProducts();
+            if ($products === false) {
+                error_log("[ProductController] Failed to get all products");
+                throw new Exception("Failed to get all products");
+            }
+            error_log("[ProductController] Successfully retrieved " . count($products) . " products");
             echo json_encode(['success' => true, 'products' => $products]);
-        } catch (Exception $e) {
-            error_log("Error getting all products: " . $e->getMessage());
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
-}
+            break;
 
-$controller = new ProductController();
-$controller->handleRequest();
+        case 'add_product':
+            $categoryId = $_POST['category_id'] ?? 0;
+            $name = trim($_POST['name'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+            $price = floatval($_POST['price'] ?? 0);
+            $quantity = intval($_POST['quantity'] ?? 0);
+
+            if (!$categoryId || !$name || $price <= 0 || $quantity < 0) {
+                throw new Exception("All fields are required and must be valid");
+            }
+
+            $result = $product->addProduct($categoryId, $name, $description, $price, $quantity);
+            if ($result === false) {
+                throw new Exception("Failed to add product");
+            }
+            echo json_encode(['success' => true, 'message' => 'Product added successfully', 'product_id' => $result['product_id'] ?? null]);
+            break;
+
+        case 'edit_product':
+            $productId = $_POST['product_id'] ?? 0;
+            $categoryId = $_POST['category_id'] ?? 0;
+            $name = trim($_POST['name'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+            $price = floatval($_POST['price'] ?? 0);
+            $quantity = intval($_POST['quantity'] ?? 0);
+
+            if (!$productId || !$name || $price <= 0 || $quantity < 0) {
+                throw new Exception("All fields are required and must be valid");
+            }
+
+            $result = $product->updateProduct($productId, $categoryId, $name, $description, $price, $quantity);
+            if ($result === false) {
+                throw new Exception("Failed to update product");
+            }
+            echo json_encode(['success' => true, 'message' => 'Product updated successfully']);
+            break;
+
+        case 'delete_product':
+            $productId = $_POST['product_id'] ?? 0;
+            if (!$productId) {
+                throw new Exception("Product ID is required");
+            }
+
+            $result = $product->deleteProduct($productId);
+            if ($result === false) {
+                throw new Exception("Failed to delete product");
+            }
+            echo json_encode(['success' => true, 'message' => 'Product deleted successfully']);
+            break;
+
+        case 'get_product_by_id':
+            $productId = $_POST['product_id'] ?? 0;
+            if (!$productId) {
+                throw new Exception("Product ID is required");
+            }
+
+            $productData = $product->getProductById($productId);
+            if ($productData === false) {
+                throw new Exception("Product not found");
+            }
+            echo json_encode(['success' => true, 'product' => $productData]);
+            break;
+
+        default:
+            echo json_encode(['success' => false, 'message' => 'Invalid action']);
+    }
+} catch (Exception $e) {
+    error_log("Error in ProductController: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
 ?>
