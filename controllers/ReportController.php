@@ -122,10 +122,29 @@ try {
             }
             echo json_encode(['success' => true, 'customers' => $customerCounts]);
             break;
+        case 'get_top_selling_products':
+            $startDate = $_POST['start_date'] ?? null;
+            $endDate = $_POST['end_date'] ?? null;
+            $limit = $_POST['limit'] ?? 50;
+            
+            $products = $report->getTopSellingProducts($startDate, $endDate, $limit);
+            
+            if ($products !== false) {
+                echo json_encode([
+                    'success' => true,
+                    'products' => $products
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Failed to load product report'
+                ]);
+            }
+            break;
 
-        default:
-            echo json_encode(['success' => false, 'message' => 'Invalid action']);
-    }
+            default:
+                    echo json_encode(['success' => false, 'message' => 'Invalid action']);
+        }
 } catch (Exception $e) {
     error_log("Error in ReportController: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
