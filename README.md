@@ -102,10 +102,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Sean** ([@Coding-Sean](https://github.com/Coding-Sean))
 - **SP4D3Z** ([@SP4D3Z](https://github.com/SP4D3Z))
 - **Rjay** ([@Rjay](https://github.com/rjay-avancena))
-
+  
 ## 🙏 Acknowledgments
 
-- Thanks to all contributors who have helped make this system better
+- Thanks to all contributors who have helped make this system better ——especially, **Kyle Lester Cerenio** for guiding and helping us throughout our project.
 - Inspired by the hardworking sari-sari store owners across the Philippines
 
 ## 📞 Support
